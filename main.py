@@ -9,6 +9,7 @@ import shutil
 import tempfile
 import typing
 import urllib
+import urllib.parse
 from collections.abc import AsyncGenerator
 from pathlib import Path
 
@@ -296,6 +297,36 @@ async def upload_podcasts(eps: list[Episode]) -> None:
         await b2_client.upload(os.environ.get("BUCKET_ID"), f"{show}.xml", pod_f)
 
 
+async def upload_index(eps: list[Episode]) -> None:
+    shows = set(ep.show for ep in eps)
+    page_f = io.StringIO()
+    page_f.write(
+        """
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<title>RRR RSS</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+	</head>
+	<body>
+"""
+    )
+    for show in sorted(shows):
+        page_f.write('<p><a href="/')
+        page_f.write(urllib.parse.quote_plus(show))
+        page_f.write('.xml">')
+        page_f.write(show)
+        page_f.write("</a></p>")
+    page_f.write("</body></html>")
+    await b2_client.upload(
+        os.environ.get("BUCKET_ID"),
+        "index.html",
+        io.BytesIO(page_f.getvalue().encode()),
+    )
+
+
 async def main() -> None:
     eps = []
     async for ep in parse_all_episode_pages(
@@ -304,6 +335,7 @@ async def main() -> None:
         await check_episode(ep)
         eps.append(ep)
     await upload_podcasts(eps)
+    await upload_index(eps)
 
 
 if __name__ == "__main__":
