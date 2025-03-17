@@ -279,7 +279,7 @@ async def generate_podcast(eps: list[Episode]) -> str:
                 summary=ep.show,
                 long_summary=ep.show,
                 media=podgen.Media.create_from_server_response(
-                    url=f"https://f004.backblazeb2.com/file/rrr-rss/{ep.player_item_id}.aac"
+                    url=f"https://rrr-rss.com/{ep.player_item_id}.aac"
                 ),
                 publication_date=ep.parsed_timestamp,
             )
